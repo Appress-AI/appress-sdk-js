@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 — 2026-10-01
+
+- `Generation.result` is now typed as a Quill Delta (`GenerationResult`) with documented TRANSCRIPTION / DIARIZATION attributes (`TimedWord`, `TranscriptLineAttributes`, `SpeakerTurnAttributes`).
+- New helpers: `getResultText`, `getSpeakerTurns`, `getTimedWords`.
+
 ## 0.1.1 — 2026-10-01
 
 - Error messages thrown by the SDK itself (missing API key, browser guard, timeouts, aborts) are now in English.

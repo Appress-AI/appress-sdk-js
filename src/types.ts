@@ -168,10 +168,12 @@ export interface Generation {
   /** Final settled amount; set only when `COMPLETED`. */
   actualCostUsd: string | null;
   /**
-   * Present only when `COMPLETED`. The shape depends on the feature and may evolve
-   * with the AI output; validate the fields you rely on.
+   * Present only when `COMPLETED`: a Quill Delta document (`{ ops }`). Line
+   * attributes depend on the feature — see `TranscriptLineAttributes` and
+   * `SpeakerTurnAttributes`. Use `getResultText()` for plain text. Fields may be
+   * added over time; validate the ones you rely on.
    */
-  result?: unknown;
+  result?: GenerationResult;
   /** `COMPLETED` only: anchors linking news quotes to the source audio timeline. */
   quoteAnchors?: unknown;
   audioTimelineOffsetSeconds?: number | null;
@@ -180,6 +182,58 @@ export interface Generation {
   error?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Generation result (Quill Delta)
+// ---------------------------------------------------------------------------
+
+/** Word-level timing. `s`/`e` are seconds from the start of the source audio. */
+export interface TimedWord {
+  /** The word as written in the transcript. */
+  t: string;
+  s: number;
+  e: number;
+}
+
+/**
+ * TRANSCRIPTION line attributes. Present only on lines that could be aligned to
+ * the audio; never present when the transcript was translated (`translate_lang`).
+ */
+export interface TranscriptLineAttributes {
+  /** Line start, `MM:SS` or `HH:MM:SS`. */
+  start?: string;
+  /** Line end, `MM:SS` or `HH:MM:SS`. */
+  end?: string;
+  words?: TimedWord[];
+}
+
+/** DIARIZATION (interview editor) attributes: one op per speaker turn. */
+export interface SpeakerTurnAttributes {
+  /** Speaker label, e.g. `A`, `B`. */
+  speaker: string;
+  /** Turn start, `MM:SS` or `HH:MM:SS`. */
+  start: string;
+  /** Turn end, `MM:SS` or `HH:MM:SS`. */
+  end: string;
+  /** Display colour suggested for the speaker label. */
+  color: string;
+  /** Present when the speech-to-text provider returned word timings. */
+  words?: TimedWord[];
+}
+
+export interface DeltaOp {
+  insert?: string | Record<string, unknown>;
+  retain?: number;
+  delete?: number;
+  attributes?: Record<string, unknown>;
+}
+
+export interface GenerationResult {
+  ops: DeltaOp[];
+  /** PROOFREADING only: changes from the input to the corrected text, as delta ops. */
+  diff?: { ops: DeltaOp[] };
+  [key: string]: unknown;
 }
 
 export interface GenerationList {

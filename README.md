@@ -112,7 +112,30 @@ for await (const g of appress.generations.iterate({ featureType: 'TRANSCRIPTION'
 }
 ```
 
-`result` is feature-specific JSON that evolves with the AI output; validate the fields you rely on.
+### Reading results
+
+`result` is a [Quill Delta](https://quilljs.com/docs/delta/) document (`{ ops }`). Helpers cover the common cases:
+
+```ts
+import { getResultText, getSpeakerTurns, getTimedWords } from '@appress/sdk';
+
+const text = getResultText(done.result);            // plain text, any feature
+
+const turns = getSpeakerTurns(interview.result);    // DIARIZATION
+// [{ speaker: 'A', start: '00:00', end: '00:02', text: 'Welcome…', words?: [...] }]
+
+const words = getTimedWords(transcript.result);     // TRANSCRIPTION / DIARIZATION
+// [{ t: 'Good', s: 1.02, e: 1.3 }, …]  — seconds from the start of the audio
+```
+
+| Feature | Line attributes |
+| --- | --- |
+| `TRANSCRIPTION` | `start`, `end` (`MM:SS`) and `words: [{ t, s, e }]` on lines aligned to the audio. Not present when the transcript was translated (`translate_lang`) or the provider returned no timings. |
+| `DIARIZATION` | One op per speaker turn: `speaker`, `start`, `end`, `color`, optional `words`. |
+| `PROOFREADING` | Corrected text, plus `result.diff` (delta ops from input to output). |
+| `NEWS` / `PRESS_RELEASE` | Formatting attributes (bold, italic, …); quote anchors are in `generation.quoteAnchors`. |
+
+New attributes may be added over time; ignore the ones you don't use.
 
 ## Live transcription
 
