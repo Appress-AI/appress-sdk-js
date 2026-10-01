@@ -100,6 +100,13 @@ for (const [name, fields] of Object.entries(OBJECTS)) {
   else diff(`Fields ${name}`, fields, Object.keys(schemas[name].properties));
 }
 
+// Values published only in `GET /api-reference/config` (not in the OpenAPI document).
+const configUrl = /^https?:/.test(source) ? new URL('/api-reference/config', source).toString() : process.env.APPRESS_CONFIG_URL;
+if (configUrl) {
+  const config = (await (await fetch(configUrl)).json()).data;
+  diff('News categories', [...sdk.NEWS_CATEGORIES], config?.generations?.newsCategories ?? []);
+}
+
 if (problems.length) {
   console.error(`Contract drift (${source}):\n- ${problems.join('\n- ')}`);
   process.exit(1);

@@ -26,22 +26,26 @@ export const LIVE_TRANSCRIPTION_STATES = [
 
 export const LIVE_TRANSCRIPTION_PLATFORMS = ['youtube', 'x', 'microphone'] as const;
 
+/**
+ * `news_category` values for NEWS and PRESS_RELEASE. The API also still accepts
+ * the older Turkish slugs (e.g. `teknoloji`), but these English values are canonical.
+ */
 export const NEWS_CATEGORIES = [
-  'politika',
-  'ekonomi_finans_enerji',
-  'spor',
-  'teknoloji',
-  'saglik',
-  'egitim',
-  'kultur_sanat',
-  'diplomasi',
-  'savunma',
-  'polis_adliye_yargi',
-  'teror',
-  'trafik_kazasi',
-  'maden_kazasi',
-  'dogal_afet',
-  'cevre_tarim',
+  'politics',
+  'economy_finance_energy',
+  'sports',
+  'technology',
+  'health',
+  'education',
+  'culture_arts',
+  'diplomacy',
+  'defense',
+  'police_justice',
+  'terrorism',
+  'traffic_accident',
+  'mining_accident',
+  'natural_disaster',
+  'environment_agriculture',
 ] as const;
 
 export const TONES = ['Objective', 'Critical', 'Investigative', 'Marketing', 'Supportive'] as const;

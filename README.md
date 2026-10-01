@@ -28,7 +28,7 @@ const appress = new Appress(); // reads APPRESS_API_KEY
 const news = await appress.generations.createAndWait({
   featureType: 'NEWS',
   inputText: 'Appress announced a new version of its AI-powered content platform.',
-  featureParams: { news_lang: 'en', tone: 'Objective', news_category: 'teknoloji' },
+  featureParams: { news_lang: 'en', tone: 'Objective', news_category: 'technology' },
 });
 
 if (news.status === 'COMPLETED') console.log(news.result);
@@ -90,7 +90,7 @@ await appress.generations.create({
   featureType: 'PRESS_RELEASE',
   featureParams: {
     mode: 'event',
-    event: { description: 'Product launch in Istanbul', news_category: 'teknoloji', tone: 'Objective', language: 'en' },
+    event: { description: 'Product launch in Istanbul', news_category: 'technology', tone: 'Objective', language: 'en' },
   },
 });
 ```

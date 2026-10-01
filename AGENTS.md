@@ -11,7 +11,7 @@
 
 - This repository and the npm package are public. Write everything in English: commit messages, branch names, PR titles/descriptions, release notes, tags, code comments, JSDoc, error messages thrown by the SDK, test names, script output, README, CHANGELOG and this file.
 - Commits use English Conventional Commits (`feat:`, `fix:`, `docs:`, `ci:`, `chore:` …). This overrides the workspace's Turkish commit convention for this repo only.
-- Exceptions: API contract values that are Turkish by definition (e.g. `news_category` slugs such as `teknoloji`) and verbatim backend `message` text in fixtures; never translate contract values.
+- Exceptions: verbatim backend `message` text in fixtures. Contract values are English (`news_category` uses English slugs such as `technology`; the API still accepts legacy Turkish slugs, which the SDK does not advertise).
 - Conversation with the user may still be Turkish; only repository content is English.
 
 ## What it is

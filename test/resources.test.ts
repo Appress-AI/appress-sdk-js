@@ -15,7 +15,7 @@ describe('generations.create', () => {
     await client(fetch).generations.create({
       featureType: 'NEWS',
       inputText: 'text',
-      featureParams: { mode: 'description', news_lang: 'tr', news_category: 'teknoloji' },
+      featureParams: { mode: 'description', news_lang: 'tr', news_category: 'technology' },
     });
     const req = requests[0]!;
     expect(req.method).toBe('POST');
@@ -23,7 +23,7 @@ describe('generations.create', () => {
     expect(JSON.parse(req.body as string)).toEqual({
       featureType: 'NEWS',
       inputText: 'text',
-      featureParams: { mode: 'description', news_lang: 'tr', news_category: 'teknoloji' },
+      featureParams: { mode: 'description', news_lang: 'tr', news_category: 'technology' },
     });
   });
 
@@ -64,7 +64,7 @@ describe('generations.create', () => {
       featureType: 'PRESS_RELEASE',
       featureParams: {
         mode: 'event',
-        event: { description: 'Product launch', news_category: 'teknoloji', tone: 'Objective', language: 'tr' },
+        event: { description: 'Product launch', news_category: 'technology', tone: 'Objective', language: 'tr' },
       },
     });
     expect(JSON.parse(requests[0]!.body as string)).not.toHaveProperty('inputText');
@@ -201,7 +201,7 @@ describe('type safety (checked by tsc)', () => {
       featureType: 'NEWS',
       inputText: 'x',
       // @ts-expect-error category must be one of the slugs
-      featureParams: { news_category: 'sports' },
+      featureParams: { news_category: 'sport' },
     };
     // @ts-expect-error live transcription is not started via /v1/generations
     const live: GenerationCreateParams = { featureType: 'LIVE_TRANSCRIPTION', inputUrl: 'https://x' };

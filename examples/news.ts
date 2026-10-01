@@ -9,7 +9,7 @@ try {
     {
       featureType: 'NEWS',
       inputText: 'Appress announced a new version of its AI-powered content generation platform.',
-      featureParams: { news_lang: 'en', tone: 'Objective', news_category: 'teknoloji' },
+      featureParams: { news_lang: 'en', tone: 'Objective', news_category: 'technology' },
     },
     { onProgress: (g) => console.log(g.status, g.progress.step ?? '') },
   );
