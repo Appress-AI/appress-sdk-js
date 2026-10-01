@@ -1,7 +1,7 @@
 // Compares the SDK's contract assumptions with the backend's public OpenAPI document.
 //
-//   npm run check:contract                                   # ../appress-nestjs/openapi/public-v1.json
-//   npm run check:contract -- https://api.appress.ai/api-reference/openapi.json
+//   npm run check:contract                         # live https://api.appress.ai document
+//   npm run check:contract -- ./path/to/openapi.json  # a local or unreleased document
 //
 // Lists added/removed endpoints, enum values or response fields and exits with 1.
 // A difference means `src/types.ts` / `src/constants.ts` and the resources need an
@@ -9,7 +9,7 @@
 import { readFile } from 'node:fs/promises';
 import * as sdk from '../dist/index.js';
 
-const source = process.argv[2] ?? new URL('../../appress-nestjs/openapi/public-v1.json', import.meta.url).pathname;
+const source = process.argv[2] ?? 'https://api.appress.ai/api-reference/openapi.json';
 
 /** Endpoints wrapped by the SDK (method + OpenAPI path). */
 const ENDPOINTS = [

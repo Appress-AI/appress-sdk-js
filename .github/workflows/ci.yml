@@ -32,4 +32,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check:contract -- https://api.appress.ai/api-reference/openapi.json
+      - run: npm run check:contract
