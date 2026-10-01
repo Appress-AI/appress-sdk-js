@@ -4,7 +4,7 @@
 
 - Read `../AGENTS.md` first. Root handles this repo directly; no dedicated specialist.
 - Independent Git repository: `Appress-AI/appress-sdk-js` (public, MIT). No commit, push or **npm publish** without explicit user instruction. Publishing is irreversible for a version number.
-- Release: bump `package.json` + `src/version.ts` + CHANGELOG, push, then a GitHub Release tagged `v<version>` runs `.github/workflows/publish.yml` (secret `NPM_TOKEN`, npm provenance). CI (`ci.yml`) runs tests on Node 20/22/24 and `check:contract` against the live `api.appress.ai` OpenAPI.
+- Release: bump `package.json` + `src/version.ts` + CHANGELOG, push, then a GitHub Release tagged `v<version>` runs `.github/workflows/publish.yml` (npm Trusted Publishing/OIDC, no token or 2FA code; provenance automatic). 0.1.0 was published manually by the `appress` npm account (passkey 2FA). CI (`ci.yml`) runs tests on Node 20/22/24 and `check:contract` against the live `api.appress.ai` OpenAPI.
 - The SDK consumes the backend contract; it never defines it. New fields/codes/endpoints land in `appress-nestjs` first.
 
 ## What it is
