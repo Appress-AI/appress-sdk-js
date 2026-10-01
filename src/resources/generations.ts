@@ -12,20 +12,20 @@ import type {
   RequestOptions,
 } from '../types.js';
 
-/** Bu durumlara ulaşan üretim bir daha değişmez. */
+/** A generation in one of these statuses never changes again. */
 export const TERMINAL_GENERATION_STATUSES: readonly GenerationStatus[] = ['COMPLETED', 'ERROR', 'CANCELLED'];
 
-/** Dosya yüklemelerinde varsayılan zaman aşımı: büyük ses dosyaları dakikalar sürebilir. */
+/** Default timeout for file uploads: large audio files can take minutes. */
 const UPLOAD_TIMEOUT_MS = 30 * 60_000;
 
 export interface WaitOptions extends RequestOptions {
-  /** İlk sorgu aralığı (ms). Varsayılan 2000. */
+  /** Initial polling interval (ms). Defaults to 2000. */
   pollIntervalMs?: number;
-  /** Aralığın çıkabileceği en yüksek değer (ms). Varsayılan 10000. */
+  /** Upper bound of the polling interval (ms). Defaults to 10000. */
   maxPollIntervalMs?: number;
-  /** Toplam bekleme sınırı (ms). Varsayılan 30 dakika; `Infinity` ile sınırsız. */
+  /** Total wait limit (ms). Defaults to 30 minutes; `Infinity` for no limit. */
   waitTimeoutMs?: number;
-  /** Her sorgudan sonra çağrılır; ilerleme göstermek için. */
+  /** Called after every poll, e.g. to show progress. */
   onProgress?: (generation: Generation) => void;
 }
 
@@ -33,9 +33,9 @@ export class Generations {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * Asenkron üretim başlatır (`202 Accepted`). Sonuç için `retrieve` veya
-   * `waitForCompletion` kullan. `Idempotency-Key` otomatik üretilir ve
-   * yeniden denemelerde korunur.
+   * Starts an asynchronous generation (`202 Accepted`). Use `retrieve` or
+   * `waitForCompletion` for the result. An `Idempotency-Key` is generated
+   * automatically and kept across retries.
    */
   async create(params: GenerationCreateParams, options: IdempotentRequestOptions = {}): Promise<Generation> {
     const idempotencyKey = options.idempotencyKey ?? randomUUID();
@@ -62,7 +62,7 @@ export class Generations {
         const form = new FormData();
         for (const [key, value] of Object.entries(fields)) {
           if (value === undefined) continue;
-          // multipart'ta featureParams JSON string olarak gider; backend çözümler.
+          // In multipart bodies featureParams is sent as a JSON string; the backend parses it.
           form.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
         }
         form.append('file', blob, fileName);
@@ -71,7 +71,7 @@ export class Generations {
     });
   }
 
-  /** Üretimin güncel durumunu ve tamamlandıysa sonucunu getirir. */
+  /** Returns the current status of a generation, and its result once completed. */
   retrieve(id: string, options: RequestOptions = {}): Promise<Generation> {
     return this.http.request<Generation>({
       ...options,
@@ -80,7 +80,7 @@ export class Generations {
     });
   }
 
-  /** Tenant'ın API üretimlerini sayfalı listeler (`{ items, total }`). */
+  /** Lists the tenant's API generations, paginated (`{ items, total }`). */
   list(params: GenerationListParams = {}, options: RequestOptions = {}): Promise<GenerationList> {
     return this.http.request<GenerationList>({
       ...options,
@@ -90,7 +90,7 @@ export class Generations {
     });
   }
 
-  /** Tüm sayfaları sırayla dolaşır: `for await (const g of client.generations.iterate())`. */
+  /** Walks every page in order: `for await (const g of client.generations.iterate())`. */
   async *iterate(params: Omit<GenerationListParams, 'skip'> = {}, options: RequestOptions = {}): AsyncGenerator<Generation> {
     const take = params.take ?? 100;
     for (let skip = 0; ; skip += take) {
@@ -101,10 +101,10 @@ export class Generations {
   }
 
   /**
-   * Üretim `COMPLETED`, `ERROR` veya `CANCELLED` olana kadar sorgular ve son
-   * hâlini döndürür. `ERROR`/`CANCELLED` hata atmaz: `status` ve `error`
-   * alanını kontrol et. Süre dolarsa `WaitTimeoutError` atılır; iş sunucuda
-   * devam ediyor olabilir, aynı kimlikle tekrar beklenebilir.
+   * Polls until the generation is `COMPLETED`, `ERROR` or `CANCELLED` and returns
+   * it. `ERROR`/`CANCELLED` do not throw: check `status` and `error`. Throws
+   * `WaitTimeoutError` when the wait limit is reached; the job may still be
+   * running on the server and can be awaited again with the same ID.
    */
   async waitForCompletion(id: string, options: WaitOptions = {}): Promise<Generation> {
     const { pollIntervalMs = 2_000, maxPollIntervalMs = 10_000, waitTimeoutMs = 30 * 60_000, onProgress, ...requestOptions } =
@@ -119,15 +119,15 @@ export class Generations {
 
       const remaining = deadline - Date.now();
       if (remaining <= 0) {
-        throw new WaitTimeoutError(`Üretim ${waitTimeoutMs} ms içinde tamamlanmadı (son durum: ${generation.status})`, id);
+        throw new WaitTimeoutError(`Generation did not finish within ${waitTimeoutMs} ms (last status: ${generation.status})`, id);
       }
       await sleep(Math.min(interval, remaining), requestOptions.signal);
-      // Uzun işlerde sorgu sıklığı kademeli azalır: 2 → 3 → 4.5 → … → 10 sn.
+      // Long jobs are polled less often over time: 2 → 3 → 4.5 → … → 10 s.
       interval = Math.min(interval * 1.5, maxPollIntervalMs);
     }
   }
 
-  /** `create` + `waitForCompletion` kısayolu. */
+  /** Shortcut for `create` followed by `waitForCompletion`. */
   async createAndWait(
     params: GenerationCreateParams,
     options: IdempotentRequestOptions & WaitOptions = {},

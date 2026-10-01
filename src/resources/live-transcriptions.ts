@@ -16,31 +16,31 @@ import type {
 export const TERMINAL_LIVE_STATES: readonly LiveTranscriptionState[] = ['COMPLETED', 'FAILED'];
 
 export interface StreamTurnsOptions extends RequestOptions {
-  /** Sorgu aralığı (ms). Varsayılan 2000. */
+  /** Polling interval (ms). Defaults to 2000. */
   pollIntervalMs?: number;
   /**
-   * `true` ise henüz kesinleşmemiş (`isFinal: false`) turlar da metni her
-   * değiştiğinde yayınlanır. Varsayılan `false`: yalnız kesinleşen turlar.
+   * When `true`, turns that are not final yet (`isFinal: false`) are also
+   * yielded whenever their text changes. Defaults to `false`: final turns only.
    */
   includePartial?: boolean;
-  /** Her sorguda oturumun son hâliyle çağrılır (durum takibi için). */
+  /** Called with the latest session on every poll (for state tracking). */
   onSession?: (session: LiveTranscription) => void;
 }
 
 export class LiveTranscriptions {
   constructor(private readonly http: HttpClient) {}
 
-  /** Seçilebilir yayın süreleri ve her biri için rezerve edilecek tutar. */
+  /** Available durations and the amount reserved for each. */
   options(options: RequestOptions = {}): Promise<LiveTranscriptionOptions> {
     return this.http.request({ ...options, method: 'GET', path: '/v1/live-transcriptions/options' });
   }
 
-  /** Bu API anahtarının aktif oturumları. */
+  /** Active sessions of this API key. */
   active(options: RequestOptions = {}): Promise<ActiveLiveTranscription[]> {
     return this.http.request({ ...options, method: 'GET', path: '/v1/live-transcriptions/active' });
   }
 
-  /** Canlı yayın transkripsiyonu başlatır (`202 Accepted`). Süre kadar tutar rezerve edilir. */
+  /** Starts a live transcription (`202 Accepted`). The amount for the chosen duration is reserved. */
   create(params: LiveTranscriptionCreateParams, options: IdempotentRequestOptions = {}): Promise<LiveTranscription> {
     const { idempotencyKey = randomUUID(), ...requestOptions } = options;
     return this.http.request({
@@ -52,12 +52,12 @@ export class LiveTranscriptions {
     });
   }
 
-  /** Oturumu ve şimdiye kadarki tüm turları getirir. */
+  /** Returns the session with all turns so far. */
   retrieve(id: string, options: RequestOptions = {}): Promise<LiveTranscription> {
     return this.http.request({ ...options, method: 'GET', path: `/v1/live-transcriptions/${encodeURIComponent(id)}` });
   }
 
-  /** Aktif oturumu durdurur. Zaten bitmiş oturumda değişiklik yapmadan son hâlini döner. */
+  /** Stops an active session. For a session that already ended, returns it unchanged. */
   stop(id: string, options: RequestOptions = {}): Promise<LiveTranscription> {
     return this.http.request({
       ...options,
@@ -66,7 +66,7 @@ export class LiveTranscriptions {
     });
   }
 
-  /** Oturumun uzatılabileceği toplam süreler ve ek rezervasyon tutarları. */
+  /** Total durations the session can be extended to, with the additional reservation for each. */
   extendOptions(id: string, options: RequestOptions = {}): Promise<LiveTranscriptionExtendOptions> {
     return this.http.request({
       ...options,
@@ -75,7 +75,7 @@ export class LiveTranscriptions {
     });
   }
 
-  /** Oturumun toplam süresini uzatır; fark kadar ek tutar rezerve edilir. */
+  /** Extends the session's total duration; the difference is reserved additionally. */
   extend(
     id: string,
     params: LiveTranscriptionExtendParams,
@@ -92,9 +92,9 @@ export class LiveTranscriptions {
   }
 
   /**
-   * Oturumu sorgulayarak yeni turları sırayla yayınlar; oturum `COMPLETED`
-   * veya `FAILED` olunca biter. Döngüden `break` ile çıkmak oturumu
-   * DURDURMAZ — durdurmak için `stop()` çağır.
+   * Polls the session and yields new turns in order; ends when the session is
+   * `COMPLETED` or `FAILED`. Breaking out of the loop does NOT stop the
+   * session — call `stop()` for that.
    *
    * ```ts
    * for await (const turn of client.liveTranscriptions.streamTurns(session.id)) {
@@ -104,7 +104,7 @@ export class LiveTranscriptions {
    */
   async *streamTurns(id: string, options: StreamTurnsOptions = {}): AsyncGenerator<LiveTranscriptionTurn> {
     const { pollIntervalMs = 2_000, includePartial = false, onSession, ...requestOptions } = options;
-    // turnId → son yayınlanan metin; kesinleşen turlar bir daha yayınlanmaz.
+    // turnId → last yielded text; final turns are never yielded again.
     const emitted = new Map<string, { text: string; isFinal: boolean }>();
 
     for (;;) {

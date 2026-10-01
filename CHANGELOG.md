@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Error messages thrown by the SDK itself (missing API key, browser guard, timeouts, aborts) are now in English.
+
 ## 0.1.0 — 2026-10-01
 
 - First version: `generations` (create, retrieve, list, iterate, waitForCompletion, createAndWait)

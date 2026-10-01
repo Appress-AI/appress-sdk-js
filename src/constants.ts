@@ -1,5 +1,5 @@
-// Sözleşmedeki enum değerleri. Tipler bunlardan türetilir; `check:contract`
-// bunları backend'in OpenAPI belgesiyle karşılaştırır.
+// Enum values of the API contract. Types are derived from these, and
+// `check:contract` compares them with the backend OpenAPI document.
 
 export const FEATURE_TYPES = [
   'TRANSCRIPTION',

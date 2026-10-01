@@ -23,7 +23,7 @@ export interface HttpRequest {
   method: HttpMethod;
   path: string;
   query?: Record<string, string | number | boolean | undefined>;
-  /** JSON gövdesi veya her denemede yeniden üretilen multipart gövde. */
+  /** JSON body, or a multipart body rebuilt for every attempt. */
   body?: unknown;
   formData?: () => FormData | Promise<FormData>;
   idempotencyKey?: string;
@@ -63,8 +63,8 @@ export class HttpClient {
       ...this.options.defaultHeaders,
       ...req.headers,
     };
-    // Aynı mantıksal istek için her denemede aynı anahtar gider: sunucu
-    // ikinci denemeyi ilk kaydın tekrarı olarak tanır, çift ücret çıkmaz.
+    // Every attempt of one logical request sends the same key, so the server
+    // treats a retry as a replay of the first attempt and never charges twice.
     if (req.idempotencyKey) headers['Idempotency-Key'] = req.idempotencyKey;
 
     let body: BodyInit | undefined;
@@ -83,11 +83,11 @@ export class HttpClient {
     try {
       response = await this.options.fetch(url, { method: req.method, headers, body, signal });
     } catch (error) {
-      if (req.signal?.aborted) throw new APIUserAbortError('İstek iptal edildi', { cause: error });
+      if (req.signal?.aborted) throw new APIUserAbortError('Request was aborted', { cause: error });
       if (timeoutSignal.aborted) {
-        throw new APITimeoutError(`İstek ${timeoutMs} ms içinde tamamlanmadı`, { cause: error });
+        throw new APITimeoutError(`Request timed out after ${timeoutMs} ms`, { cause: error });
       }
-      throw new APIConnectionError('Appress API’ye bağlanılamadı', { cause: error });
+      throw new APIConnectionError('Could not connect to the Appress API', { cause: error });
     }
 
     const payload = await readBody(response);
@@ -134,15 +134,15 @@ function retryDelayMs(error: unknown, attempt: number): number {
   const retryAfter = parseRetryAfterSeconds(headers?.get('retry-after') ?? null);
   if (retryAfter !== undefined) return Math.min(retryAfter * 1000, MAX_RETRY_AFTER_MS);
   const base = Math.min(INITIAL_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS);
-  // Tam jitter yerine ±25%: çok sayıda istemci aynı anda yeniden denemesin,
-  // ama bekleme de öngörülebilir kalsın.
+  // ±25% jitter rather than full jitter: clients don't retry in lockstep, while
+  // the wait stays predictable.
   return base * (0.75 + Math.random() * 0.5);
 }
 
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(new APIUserAbortError('İstek iptal edildi'));
+      reject(new APIUserAbortError('Request was aborted'));
       return;
     }
     const timer = setTimeout(() => {
@@ -151,7 +151,7 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     }, ms);
     const onAbort = () => {
       clearTimeout(timer);
-      reject(new APIUserAbortError('İstek iptal edildi'));
+      reject(new APIUserAbortError('Request was aborted'));
     };
     signal?.addEventListener('abort', onAbort, { once: true });
   });

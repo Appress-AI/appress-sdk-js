@@ -1,7 +1,7 @@
 name: Publish to npm
 
-# GitHub'da bir Release yayınlanınca çalışır (etiket package.json sürümüyle aynı olmalı, örn. v0.2.0).
-# Kimlik doğrulama npm Trusted Publishing (OIDC) ile yapılır: token veya 2FA kodu gerekmez.
+# Runs when a GitHub Release is published (the tag must match package.json, e.g. v0.2.0).
+# Authenticates with npm Trusted Publishing (OIDC): no token or 2FA code needed.
 # npmjs.com → @appress/sdk → Settings → Trusted Publisher: Appress-AI / appress-sdk-js / publish.yml
 on:
   release:
@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC ile npm'e kimlik + provenance
+  id-token: write # OIDC identity for npm + provenance
 
 jobs:
   publish:
@@ -18,11 +18,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          # Trusted Publishing npm CLI 11.5.1+ ister; Node 24 bunu hazır getirir.
+          # Trusted Publishing needs npm CLI 11.5.1+, which ships with Node 24.
           node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
-      - name: Etiket ile paket sürümü aynı mı
+      - name: Check that the tag matches the package version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm publish

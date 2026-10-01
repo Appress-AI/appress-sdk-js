@@ -1,13 +1,13 @@
-// Çalıştırma: APPRESS_API_KEY=... npx tsx examples/live.ts <youtube-url>
-// DİKKAT: seçilen süre kadar API bakiyesi rezerve eder.
+// Run: APPRESS_API_KEY=... npx tsx examples/live.ts <stream-url>
+// NOTE: reserves API credit for the chosen duration.
 import { Appress } from '../src/index.js';
 
 const url = process.argv[2];
-if (!url) throw new Error('Kullanım: examples/live.ts <yayın-url>');
+if (!url) throw new Error('Usage: examples/live.ts <stream-url>');
 
 const appress = new Appress();
 const session = await appress.liveTranscriptions.create({ url, maxDurationMinutes: 15 });
-console.log('Oturum:', session.id);
+console.log('Session:', session.id);
 
 process.on('SIGINT', async () => {
   await appress.liveTranscriptions.stop(session.id);

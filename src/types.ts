@@ -1,7 +1,7 @@
-// Public API v1 sözleşmesinin TypeScript karşılığı.
-// Kaynak: appress-nestjs `src/api-platform/` (controller, DTO ve serializer'lar)
-// ve `GET /api-reference/openapi.json`. Yanıt şekilleri değişirse önce backend
-// sözleşmesi güncellenir, sonra bu dosya (`npm run check:contract` farkı gösterir).
+// TypeScript types for the Appress public API v1.
+// Source of truth: the backend OpenAPI document (`GET /api-reference/openapi.json`).
+// When response shapes change there, update this file; `npm run check:contract`
+// reports the drift.
 
 import type {
   FEATURE_TYPES,
@@ -15,7 +15,7 @@ import type {
 
 export type FeatureType = (typeof FEATURE_TYPES)[number];
 
-/** `/v1/generations` üzerinden başlatılabilen feature'lar (canlı yayın hariç). */
+/** Features that can be started through `/v1/generations` (everything except live transcription). */
 export type GenerationFeatureType = Exclude<FeatureType, 'LIVE_TRANSCRIPTION'>;
 
 export type GenerationStatus = (typeof GENERATION_STATUSES)[number];
@@ -31,21 +31,21 @@ export type Tone = (typeof TONES)[number];
 // ---------------------------------------------------------------------------
 
 export interface TranscriptionParams {
-  /** Kaynak ses dili. Varsayılan `tr`. */
+  /** Source audio language. Defaults to `tr`. */
   stt_lang?: string;
-  /** Verilirse deşifre bu dile çevrilir. */
+  /** When set, the transcript is translated into this language. */
   translate_lang?: string;
   title?: string;
 }
 
 export interface DiarizationParams {
-  /** Beklenen konuşmacı sayısı (en az 1). */
+  /** Expected number of speakers (at least 1). */
   speakers_expected?: number;
   title?: string;
 }
 
 export interface ProofreadingParams {
-  /** `tr` (varsayılan) veya otomatik dil algılama için `intl`. */
+  /** `tr` (default) or `intl` for automatic language detection. */
   language?: 'tr' | 'intl';
   title?: string;
 }
@@ -65,7 +65,7 @@ export interface EventDetails {
   description: string;
   news_category: NewsCategory;
   tone: Tone;
-  /** Çıktı dili, örn. `tr`. */
+  /** Output language, e.g. `tr`. */
   language: string;
   date?: string;
   location?: string;
@@ -92,10 +92,10 @@ export interface FeatureParamsMap {
 // ---------------------------------------------------------------------------
 
 /**
- * Yüklenecek dosya:
- * - `string`: diskteki dosya yolu (bellek dostu, `fs.openAsBlob` ile akıtılır)
+ * File to upload:
+ * - `string`: path on disk (streamed with `fs.openAsBlob`, not loaded into memory)
  * - `Blob` / `File`
- * - `{ data, fileName, contentType? }`: bellekteki içerik
+ * - `{ data, fileName, contentType? }`: in-memory content
  */
 export type FileInput =
   | string
@@ -124,9 +124,9 @@ type DescriptionModeRequest<F extends GenerationFeatureType> = {
 } & InputVariant;
 
 /**
- * `POST /v1/generations` gövdesi. Normal modda tam olarak bir girdi
- * (`inputText`, `inputUrl` veya `file`) gönderilir; NEWS ve PRESS_RELEASE'in
- * event modunda girdi yoktur, olay bilgisi `featureParams.event` içindedir.
+ * Body of `POST /v1/generations`. In the default mode send exactly one input
+ * (`inputText`, `inputUrl` or `file`). The event mode of NEWS and PRESS_RELEASE
+ * takes no input; the event details go in `featureParams.event`.
  */
 export type GenerationCreateParams =
   | DescriptionModeRequest<'TRANSCRIPTION'>
@@ -139,16 +139,16 @@ export type GenerationCreateParams =
 
 export interface GenerationListParams {
   skip?: number;
-  /** 1–100, varsayılan 20. */
+  /** 1–100, defaults to 20. */
   take?: number;
   featureType?: FeatureType;
   status?: GenerationStatus;
-  /** Yalnız bu anahtarın ürettiklerini getirir; verilmezse tenant'ın tüm API üretimleri döner. */
+  /** Only generations created by this API key; without it, every API generation of the tenant is returned. */
   apiKeyId?: string;
 }
 
 // ---------------------------------------------------------------------------
-// Generation yanıtları
+// Generation responses
 // ---------------------------------------------------------------------------
 
 export interface GenerationProgress {
@@ -163,20 +163,20 @@ export interface Generation {
   status: GenerationStatus;
   title: string | null;
   progress: GenerationProgress;
-  /** Başlangıçta rezerve edilen tutar, 6 ondalıklı USD string'i (örn. `"0.200000"`). */
+  /** Amount reserved at start, as a USD string with 6 decimals (e.g. `"0.200000"`). */
   estimatedCostUsd: string;
-  /** Yalnız `COMPLETED` durumunda dolu; mahsup edilen gerçek tutar. */
+  /** Final settled amount; set only when `COMPLETED`. */
   actualCostUsd: string | null;
   /**
-   * Yalnız `COMPLETED` durumunda bulunur. Şema feature'a göre değişir ve AI
-   * çıktısıyla birlikte evrilebilir; kalıcı entegrasyonlarda kendi tarafında doğrula.
+   * Present only when `COMPLETED`. The shape depends on the feature and may evolve
+   * with the AI output; validate the fields you rely on.
    */
   result?: unknown;
-  /** Yalnız `COMPLETED`: haber alıntılarını kaynak sesin zaman eksenine bağlayan çapalar. */
+  /** `COMPLETED` only: anchors linking news quotes to the source audio timeline. */
   quoteAnchors?: unknown;
   audioTimelineOffsetSeconds?: number | null;
   originalText?: string | null;
-  /** Yalnız `ERROR` / `CANCELLED`: kullanıcıya gösterilebilir hata mesajı. */
+  /** `ERROR` / `CANCELLED` only: user-presentable error message. */
   error?: string;
   createdAt: string;
   updatedAt: string;
@@ -188,22 +188,22 @@ export interface GenerationList {
 }
 
 // ---------------------------------------------------------------------------
-// Canlı transkripsiyon
+// Live transcription
 // ---------------------------------------------------------------------------
 
 export type LiveTranscriptionState = (typeof LIVE_TRANSCRIPTION_STATES)[number];
 
 export interface LiveTranscriptionCreateParams {
-  /** Canlı yayın URL'si (YouTube, X...). */
+  /** Live stream URL (YouTube, X, ...). */
   url: string;
   title?: string;
-  /** Beklenen dil, varsayılan `tr`. */
+  /** Expected language, defaults to `tr`. */
   expectedLanguage?: string;
   speakerLabels?: boolean;
-  /** 1–10; yalnız `speakerLabels: true` ile. */
+  /** 1–10; only together with `speakerLabels: true`. */
   maxSpeakers?: number;
   includeWords?: boolean;
-  /** `liveTranscriptions.options()` içindeki sürelerden biri; varsayılan 120. */
+  /** One of the durations from `liveTranscriptions.options()`; defaults to 120. */
   maxDurationMinutes?: number;
 }
 
@@ -216,7 +216,7 @@ export interface LiveTranscriptionTurn {
   endMs: number | null;
   speaker: string | null;
   language: string | null;
-  /** Yalnız oturum `includeWords: true` ile başlatıldıysa dolu. */
+  /** Set only when the session was started with `includeWords: true`. */
   words: LiveTranscriptionWord[] | null;
 }
 
@@ -279,29 +279,29 @@ export interface LiveTranscriptionExtendOptions {
 }
 
 export interface LiveTranscriptionExtendParams {
-  /** Yeni toplam süre (dakika); `extendOptions()` içinden seçilmeli. */
+  /** New total duration in minutes; pick one from `extendOptions()`. */
   totalDurationMinutes: number;
 }
 
 // ---------------------------------------------------------------------------
-// Ortak istek seçenekleri
+// Common request options
 // ---------------------------------------------------------------------------
 
 export interface RequestOptions {
-  /** Bu istek için zaman aşımı (ms). İstemci varsayılanını ezer. */
+  /** Timeout for this request (ms). Overrides the client default. */
   timeoutMs?: number;
-  /** Bu istek için en fazla yeniden deneme sayısı. */
+  /** Maximum number of retries for this request. */
   maxRetries?: number;
   signal?: AbortSignal;
-  /** Ek HTTP başlıkları. */
+  /** Extra HTTP headers. */
   headers?: Record<string, string>;
 }
 
 export interface IdempotentRequestOptions extends RequestOptions {
   /**
-   * Verilmezse SDK yeni bir UUID üretir ve yeniden denemelerde aynısını kullanır.
-   * Kendi kuyruğunda aynı işlemi tekrar gönderebiliyorsan kalıcı bir anahtar ver
-   * (örn. kendi kayıt kimliğinden türet); böylece çift ücretlendirme olmaz.
+   * Defaults to a fresh UUID that is reused on automatic retries. If your own job
+   * queue may resend the same logical operation, pass a stable key (e.g. derived
+   * from your record ID) so it is never charged twice.
    */
   idempotencyKey?: string;
 }

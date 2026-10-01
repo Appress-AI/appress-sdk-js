@@ -7,6 +7,13 @@
 - Release: bump `package.json` + `src/version.ts` + CHANGELOG, push, then a GitHub Release tagged `v<version>` runs `.github/workflows/publish.yml` (npm Trusted Publishing/OIDC, no token or 2FA code; provenance automatic). 0.1.0 was published manually by the `appress` npm account (passkey 2FA). CI (`ci.yml`) runs tests on Node 20/22/24 and `check:contract` against the live `api.appress.ai` OpenAPI.
 - The SDK consumes the backend contract; it never defines it. New fields/codes/endpoints land in `appress-nestjs` first.
 
+## Language: English only (public repository)
+
+- This repository and the npm package are public. Write everything in English: commit messages, branch names, PR titles/descriptions, release notes, tags, code comments, JSDoc, error messages thrown by the SDK, test names, script output, README, CHANGELOG and this file.
+- Commits use English Conventional Commits (`feat:`, `fix:`, `docs:`, `ci:`, `chore:` …). This overrides the workspace's Turkish commit convention for this repo only.
+- Exceptions: API contract values that are Turkish by definition (e.g. `news_category` slugs such as `teknoloji`) and verbatim backend `message` text in fixtures; never translate contract values.
+- Conversation with the user may still be Turkish; only repository content is English.
+
 ## What it is
 
 - `@appress/sdk`: zero-dependency TypeScript client for the public `/v1` API (API-key Bearer auth). Node ≥ 20.3, ESM + CJS via tsup.

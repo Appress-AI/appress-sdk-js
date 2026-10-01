@@ -4,21 +4,21 @@ import { Generations } from './resources/generations.js';
 import { LiveTranscriptions } from './resources/live-transcriptions.js';
 
 export interface ClientOptions {
-  /** API anahtarı. Verilmezse `APPRESS_API_KEY` ortam değişkeni okunur. */
+  /** API key. Defaults to the `APPRESS_API_KEY` environment variable. */
   apiKey?: string;
-  /** Varsayılan `https://api.appress.ai`; `APPRESS_BASE_URL` ile de verilebilir. */
+  /** Defaults to `https://api.appress.ai`; can also be set with `APPRESS_BASE_URL`. */
   baseURL?: string;
-  /** İstek başına zaman aşımı (ms). Varsayılan 60 sn; dosya yüklemelerinde 30 dk. */
+  /** Per-request timeout (ms). Defaults to 60 s; 30 min for file uploads. */
   timeoutMs?: number;
-  /** 408/429/5xx-geçici ve ağ hatalarında en fazla yeniden deneme. Varsayılan 4. */
+  /** Maximum retries on 408/429/transient 5xx and network errors. Defaults to 4. */
   maxRetries?: number;
-  /** Özel `fetch` (proxy, test). Varsayılan global `fetch`. */
+  /** Custom `fetch` (proxy, tests). Defaults to the global `fetch`. */
   fetch?: typeof globalThis.fetch;
-  /** Her isteğe eklenecek başlıklar. */
+  /** Headers added to every request. */
   defaultHeaders?: Record<string, string>;
   /**
-   * API anahtarı tarayıcıya gömülürse herkes tarafından okunabilir; SDK bu
-   * yüzden tarayıcıda varsayılan olarak çalışmaz. Ne yaptığından eminsen `true`.
+   * An API key shipped to a browser can be read by anyone, so the SDK refuses to
+   * run in a browser by default. Set `true` only if you know what you are doing.
    */
   dangerouslyAllowBrowser?: boolean;
 }
@@ -34,15 +34,15 @@ export class Appress {
     const env = typeof process !== 'undefined' ? process.env : {};
     const apiKey = options.apiKey ?? env['APPRESS_API_KEY'];
     if (!apiKey) {
-      throw new AppressError('API anahtarı yok: `new Appress({ apiKey })` ver veya APPRESS_API_KEY ortam değişkenini tanımla');
+      throw new AppressError('Missing API key: pass `new Appress({ apiKey })` or set the APPRESS_API_KEY environment variable');
     }
     if (isBrowser() && !options.dangerouslyAllowBrowser) {
       throw new AppressError(
-        'Appress SDK tarayıcıda çalıştırılamaz: API anahtarı sızar. İstekleri kendi backend’inden gönder.',
+        'The Appress SDK cannot run in a browser: it would expose your API key. Call the API from your own backend.',
       );
     }
     const fetchImpl = options.fetch ?? globalThis.fetch;
-    if (typeof fetchImpl !== 'function') throw new AppressError('Global fetch bulunamadı; Node.js 20+ gerekir');
+    if (typeof fetchImpl !== 'function') throw new AppressError('Global fetch is not available; Node.js 20.3+ is required');
 
     this.http = new HttpClient({
       apiKey,
@@ -57,8 +57,8 @@ export class Appress {
   }
 
   /**
-   * Tipli yardımcısı olmayan bir uca ham istek. Zarf (`{ success, data }`)
-   * açılır, hata/yeniden deneme davranışı diğer metotlarla aynıdır.
+   * Raw request for an endpoint without a typed helper. The `{ success, data }`
+   * envelope is unwrapped; errors and retries behave like the other methods.
    */
   request<T = unknown>(req: HttpRequest): Promise<T> {
     return this.http.request<T>(req);

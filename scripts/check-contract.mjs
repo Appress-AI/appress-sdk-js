@@ -1,17 +1,17 @@
-// SDK'nın sözleşme varsayımlarını backend'in public OpenAPI belgesiyle karşılaştırır.
+// Compares the SDK's contract assumptions with the backend's public OpenAPI document.
 //
 //   npm run check:contract                                   # ../appress-nestjs/openapi/public-v1.json
 //   npm run check:contract -- https://api.appress.ai/api-reference/openapi.json
 //
-// Uç noktası, enum değeri veya yanıt alanı eklendi/kaldırıldıysa farkı listeler ve
-// 1 ile çıkar. Fark, SDK'nın `src/types.ts` / `src/constants.ts` ve kaynaklarının
-// güncellenmesi gerektiği anlamına gelir; bu dosyadaki listeler de onlarla birlikte güncellenir.
+// Lists added/removed endpoints, enum values or response fields and exits with 1.
+// A difference means `src/types.ts` / `src/constants.ts` and the resources need an
+// update; update the lists in this file together with them.
 import { readFile } from 'node:fs/promises';
 import * as sdk from '../dist/index.js';
 
 const source = process.argv[2] ?? new URL('../../appress-nestjs/openapi/public-v1.json', import.meta.url).pathname;
 
-/** SDK'nın sarmaladığı uçlar (method + OpenAPI yolu). */
+/** Endpoints wrapped by the SDK (method + OpenAPI path). */
 const ENDPOINTS = [
   'POST /v1/generations',
   'GET /v1/generations',
@@ -25,7 +25,7 @@ const ENDPOINTS = [
   'POST /v1/live-transcriptions/{id}/extend',
 ];
 
-/** OpenAPI enum şeması → SDK sabiti. */
+/** OpenAPI enum schema → SDK constant. */
 const ENUMS = {
   FeatureType: sdk.FEATURE_TYPES,
   GenerationStatus: sdk.GENERATION_STATUSES,
@@ -34,7 +34,7 @@ const ENUMS = {
   LiveTranscriptionPlatform: sdk.LIVE_TRANSCRIPTION_PLATFORMS,
 };
 
-/** OpenAPI nesne şeması → `src/types.ts` arayüzündeki alanlar. */
+/** OpenAPI object schema → fields of the matching `src/types.ts` interface. */
 const OBJECTS = {
   ApiGenerationDto: [
     'id', 'featureType', 'inputType', 'status', 'title', 'progress', 'estimatedCostUsd', 'actualCostUsd',
@@ -59,7 +59,7 @@ const OBJECTS = {
   ApiLiveExtendOptionDto: ['totalDurationMinutes', 'additionalReservedCostUsd', 'totalReservedCostUsd'],
   CreateApiGenerationDto: ['featureType', 'inputText', 'inputUrl', 'featureParams'],
   CreateLiveTranscriptionDto: [
-    // `source` SDK'da bilinçli yok: API yalnız "url" kabul eder ve varsayılan odur.
+    // `source` is intentionally absent from the SDK: the API only accepts "url", the default.
     'source', 'url', 'title', 'expectedLanguage', 'speakerLabels', 'maxSpeakers', 'includeWords', 'maxDurationMinutes',
   ],
   ExtendApiLiveTranscriptionDto: ['totalDurationMinutes'],
@@ -74,34 +74,34 @@ const problems = [];
 const diff = (label, expected, actual) => {
   const missing = actual.filter((v) => !expected.includes(v));
   const extra = expected.filter((v) => !actual.includes(v));
-  if (missing.length) problems.push(`${label}: backend'de var, SDK'da yok → ${missing.join(', ')}`);
-  if (extra.length) problems.push(`${label}: SDK'da var, backend'de yok → ${extra.join(', ')}`);
+  if (missing.length) problems.push(`${label}: in backend, missing in SDK → ${missing.join(', ')}`);
+  if (extra.length) problems.push(`${label}: in SDK, missing in backend → ${extra.join(', ')}`);
 };
 
 const operations = Object.entries(spec.paths ?? {}).flatMap(([path, ops]) =>
   Object.keys(ops).map((method) => [`${method.toUpperCase()} ${path}`, ops[method]]),
 );
-diff('Uç noktalar', ENDPOINTS, operations.map(([key]) => key));
+diff('Endpoints', ENDPOINTS, operations.map(([key]) => key));
 
 for (const [key, op] of operations) {
   const hasKey = (op.parameters ?? []).some((p) => p.in === 'header' && p.name.toLowerCase() === 'idempotency-key');
   if (hasKey !== IDEMPOTENT.includes(key)) {
-    problems.push(`${key}: Idempotency-Key ${hasKey ? 'backend’de zorunlu, SDK göndermiyor' : 'SDK gönderiyor, backend tanımlamıyor'}`);
+    problems.push(`${key}: Idempotency-Key ${hasKey ? 'required by backend, not sent by SDK' : 'sent by SDK, not declared by backend'}`);
   }
 }
 
 const schemas = spec.components?.schemas ?? {};
 for (const [name, values] of Object.entries(ENUMS)) {
-  if (!schemas[name]?.enum) problems.push(`Enum şeması yok: ${name}`);
+  if (!schemas[name]?.enum) problems.push(`Missing enum schema: ${name}`);
   else diff(`Enum ${name}`, [...values], schemas[name].enum);
 }
 for (const [name, fields] of Object.entries(OBJECTS)) {
-  if (!schemas[name]?.properties) problems.push(`Nesne şeması yok: ${name}`);
-  else diff(`Alanlar ${name}`, fields, Object.keys(schemas[name].properties));
+  if (!schemas[name]?.properties) problems.push(`Missing object schema: ${name}`);
+  else diff(`Fields ${name}`, fields, Object.keys(schemas[name].properties));
 }
 
 if (problems.length) {
-  console.error(`Sözleşme farkı (${source}):\n- ${problems.join('\n- ')}`);
+  console.error(`Contract drift (${source}):\n- ${problems.join('\n- ')}`);
   process.exit(1);
 }
-console.log(`SDK sözleşmesi güncel (${operations.length} uç, ${Object.keys(ENUMS).length} enum, ${Object.keys(OBJECTS).length} şema).`);
+console.log(`SDK contract is up to date (${operations.length} endpoints, ${Object.keys(ENUMS).length} enums, ${Object.keys(OBJECTS).length} schemas).`);

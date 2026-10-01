@@ -9,7 +9,7 @@ export interface RecordedRequest {
 
 type Responder = (req: RecordedRequest, index: number) => Response | Promise<Response>;
 
-/** Sırayla verilen yanıtları dönen, istekleri kaydeden sahte fetch. */
+/** Fake fetch that returns the given responses in order and records requests. */
 export function mockFetch(...responders: Responder[]) {
   const requests: RecordedRequest[] = [];
   const fetch = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -21,7 +21,7 @@ export function mockFetch(...responders: Responder[]) {
     };
     requests.push(req);
     const responder = responders[Math.min(requests.length - 1, responders.length - 1)];
-    if (!responder) throw new Error('beklenmeyen istek');
+    if (!responder) throw new Error('unexpected request');
     return responder(req, requests.length - 1);
   }) as typeof globalThis.fetch;
   return { fetch, requests };

@@ -1,9 +1,9 @@
-// Hata hiyerarşisi. Backend hata zarfı:
+// Error hierarchy. Backend error envelope:
 // `{ success: false, statusCode, message, code?, nextAction? }`.
-// `code` alanı makine tarafından okunacak sabittir; `message` Türkçe ve
-// kullanıcıya gösterilebilir metindir, sözleşme değildir.
+// `code` is a stable machine-readable value; `message` is human-readable text
+// (currently Turkish) and is not part of the contract.
 
-/** Backend'in `/v1` altında döndürebildiği sabit hata kodları. */
+/** Stable error codes the backend can return under `/v1`. */
 export type AppressErrorCode =
   | 'IDEMPOTENCY_KEY_REQUIRED'
   | 'IDEMPOTENCY_KEY_CONFLICT'
@@ -18,7 +18,7 @@ export type AppressErrorCode =
   | 'RATE_LIMIT_UNAVAILABLE'
   | 'DB_POOL_SATURATED';
 
-/** SDK'nın attığı tüm hataların ortak tabanı. */
+/** Base class of every error thrown by the SDK. */
 export class AppressError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
@@ -26,13 +26,13 @@ export class AppressError extends Error {
   }
 }
 
-/** Sunucunun HTTP hata yanıtı döndürdüğü durumlar. */
+/** The server returned an HTTP error response. */
 export class APIError extends AppressError {
   readonly status: number;
-  /** Bilinen bir sabitse `AppressErrorCode`; yeni backend sürümleri yeni değer ekleyebilir. */
+  /** An `AppressErrorCode` when known; newer backend versions may add values. */
   readonly code: AppressErrorCode | (string & {}) | undefined;
   readonly headers: Headers;
-  /** Ham yanıt gövdesi (JSON değilse metin). */
+  /** Raw response body (text when it is not JSON). */
   readonly body: unknown;
 
   constructor(status: number, message: string, code: string | undefined, headers: Headers, body: unknown) {
@@ -44,42 +44,42 @@ export class APIError extends AppressError {
   }
 }
 
-/** 400 — doğrulama hatası. İsteği düzelt; körlemesine tekrar etme. */
+/** 400 — validation error. Fix the request; do not retry it blindly. */
 export class BadRequestError extends APIError {}
-/** 401 — eksik, geçersiz veya iptal edilmiş API anahtarı. */
+/** 401 — missing, invalid or revoked API key. */
 export class AuthenticationError extends APIError {}
-/** 403 — işlem için yetki veya bakiye yok. */
+/** 403 — not permitted or not enough credit. */
 export class PermissionDeniedError extends APIError {}
-/** 403 `INSUFFICIENT_API_CREDIT` — API bakiyesi yetersiz. Ücret alınmadı; cüzdana bakiye yükle. */
+/** 403 `INSUFFICIENT_API_CREDIT` — not enough API credit. Nothing was charged; top up the wallet. */
 export class InsufficientCreditError extends PermissionDeniedError {}
-/** 404 — üretim veya oturum bulunamadı (ya da başka bir anahtara/tenant'a ait). */
+/** 404 — generation or session not found (or it belongs to another key/tenant). */
 export class NotFoundError extends APIError {}
-/** 409 — çakışma. Ayrıntı için `code` alanına bak. */
+/** 409 — conflict. See `code` for details. */
 export class ConflictError extends APIError {}
-/** 409 `IDEMPOTENCY_KEY_CONFLICT` — aynı anahtar farklı gövdeyle kullanıldı. */
+/** 409 `IDEMPOTENCY_KEY_CONFLICT` — the same key was used with a different body. */
 export class IdempotencyConflictError extends ConflictError {}
-/** 409 `CONCURRENT_GENERATION_LIMIT` — paketinin eşzamanlı üretim limiti dolu. */
+/** 409 `CONCURRENT_GENERATION_LIMIT` — your plan's concurrent generation limit is reached. */
 export class ConcurrencyLimitError extends ConflictError {}
-/** 413 — dosya veya istek gövdesi sınırı aşıldı. */
+/** 413 — file or request body limit exceeded. */
 export class PayloadTooLargeError extends APIError {}
-/** 429 — hız limiti. SDK otomatik tekrar dener; denemeler tükenirse atılır. */
+/** 429 — rate limited. The SDK retries automatically and throws once retries are exhausted. */
 export class RateLimitError extends APIError {
-  /** Sunucunun önerdiği bekleme süresi (saniye), varsa. */
+  /** Wait time suggested by the server (seconds), if any. */
   get retryAfterSeconds(): number | undefined {
     return parseRetryAfterSeconds(this.headers.get('retry-after'));
   }
 }
-/** 5xx — sunucu veya bağımlı servis hatası. */
+/** 5xx — server or upstream service error. */
 export class InternalServerError extends APIError {}
 
-/** Ağ hatası; istek sunucuya ulaşamadı veya yanıt alınamadı. */
+/** Network error: the request did not reach the server or no response arrived. */
 export class APIConnectionError extends AppressError {}
-/** İstek zaman aşımına uğradı. */
+/** The request timed out. */
 export class APITimeoutError extends APIConnectionError {}
-/** İstek çağıranın `AbortSignal`'i ile iptal edildi. */
+/** The request was aborted through the caller's `AbortSignal`. */
 export class APIUserAbortError extends AppressError {}
 
-/** `waitForCompletion` belirlenen süre içinde son duruma ulaşmadı. İş sunucuda devam ediyor olabilir. */
+/** `waitForCompletion` did not reach a final status in time. The job may still be running on the server. */
 export class WaitTimeoutError extends AppressError {
   constructor(
     message: string,

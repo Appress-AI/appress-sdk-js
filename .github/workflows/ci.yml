@@ -23,7 +23,7 @@ jobs:
       - run: npm run build
 
   contract:
-    # Canlı backend sözleşmesiyle sapma: backend /v1'i değiştirip SDK'yı güncellemediyse kırmızı yanar.
+    # Drift against the live backend contract: fails when /v1 changed but the SDK was not updated.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -2,17 +2,17 @@ import { openAsBlob } from 'node:fs';
 import { basename } from 'node:path';
 import type { FileInput } from '../types.js';
 
-/** `FileInput`'u multipart'a eklenecek `Blob` + dosya adına çevirir. */
+/** Turns a `FileInput` into a `Blob` and file name for the multipart body. */
 export async function toUploadable(input: FileInput): Promise<{ blob: Blob; fileName: string }> {
   if (typeof input === 'string') {
-    // Dosya belleğe okunmaz; Blob diskten talep edildikçe akıtılır.
+    // The file is not read into memory; the Blob streams from disk on demand.
     const blob = await openAsBlob(input, { type: contentTypeFor(input) });
     return { blob, fileName: basename(input) };
   }
   if (input instanceof Blob) {
     const name = (input as { name?: unknown }).name;
     if (typeof name !== 'string' || !name) {
-      throw new TypeError('Blob girdisinin adı yok; { data, fileName } biçimini kullan');
+      throw new TypeError('The Blob has no name; pass { data, fileName } instead');
     }
     return { blob: input, fileName: name };
   }
