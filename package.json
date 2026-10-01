@@ -1,0 +1,66 @@
+{
+  "name": "@appress/sdk",
+  "version": "0.1.0",
+  "description": "Official Node.js / TypeScript client for the Appress public API",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.3"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "appress",
+    "transcription",
+    "news",
+    "ai",
+    "sdk"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:contract": "tsup --silent && node scripts/check-contract.mjs",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Appress-AI/appress-sdk-js.git"
+  },
+  "homepage": "https://github.com/Appress-AI/appress-sdk-js#readme",
+  "bugs": {
+    "url": "https://github.com/Appress-AI/appress-sdk-js/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

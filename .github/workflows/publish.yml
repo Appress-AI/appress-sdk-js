@@ -1,0 +1,28 @@
+name: Publish to npm
+
+# GitHub'da bir Release yayınlanınca çalışır (etiket package.json sürümüyle aynı olmalı, örn. v0.1.0).
+# Gerekli secret: NPM_TOKEN (npm "Granular Access Token", yalnız @appress kapsamında publish yetkili).
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - name: Etiket ile paket sürümü aynı mı
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
