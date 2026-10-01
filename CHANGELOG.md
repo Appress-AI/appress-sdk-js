@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-10-01
 
 - Error messages thrown by the SDK itself (missing API key, browser guard, timeouts, aborts) are now in English.
 
