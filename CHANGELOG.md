@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-10-02
+
+- Breaking: live session `state` values are `CREATED`, `STARTING`, `STREAMING`, `STOPPING`, `COMPLETED`, `FAILED`; the intermediate start-up states are reported as `STARTING`.
+- Live session `failureCode` is typed with the published `LIVE_TRANSCRIPTION_FAILURE_CODES`; `progress.step` with `GENERATION_PROGRESS_STEPS` (`preparing`, `processing`, `finalizing`). New values may be added to both.
+- Breaking: the 503 busy error code is `SERVICE_BUSY`. New `ERROR_CODES` constant; `AppressErrorCode` derives from it.
+- `check:contract` also compares live failure codes and error codes with `GET /api-reference/config`.
+
 ## 0.3.0 — 2026-10-01
 
 - `news_category` uses English values (`technology`, `sports`, …). `NewsCategory` and `NEWS_CATEGORIES` now list the English values.

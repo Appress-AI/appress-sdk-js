@@ -1,22 +1,12 @@
-// Error hierarchy. Backend error envelope:
+// Error hierarchy. Error envelope:
 // `{ success: false, statusCode, message, code?, nextAction? }`.
 // `code` is a stable machine-readable value; `message` is human-readable text
 // (currently Turkish) and is not part of the contract.
 
-/** Stable error codes the backend can return under `/v1`. */
-export type AppressErrorCode =
-  | 'IDEMPOTENCY_KEY_REQUIRED'
-  | 'IDEMPOTENCY_KEY_CONFLICT'
-  | 'IDEMPOTENCY_REQUEST_IN_PROGRESS'
-  | 'CONCURRENT_GENERATION_LIMIT'
-  | 'LIVE_SESSION_NOT_EXTENDABLE'
-  | 'LIVE_EXTENSION_IN_PROGRESS'
-  | 'LIVE_EXTENSION_INVALID'
-  | 'INSUFFICIENT_API_CREDIT'
-  | 'INVALID_API_KEY'
-  | 'RATE_LIMIT_EXCEEDED'
-  | 'RATE_LIMIT_UNAVAILABLE'
-  | 'DB_POOL_SATURATED';
+import type { ERROR_CODES } from './constants.js';
+
+/** Stable error codes the API can return under `/v1`. */
+export type AppressErrorCode = (typeof ERROR_CODES)[number];
 
 /** Base class of every error thrown by the SDK. */
 export class AppressError extends Error {
@@ -29,7 +19,7 @@ export class AppressError extends Error {
 /** The server returned an HTTP error response. */
 export class APIError extends AppressError {
   readonly status: number;
-  /** An `AppressErrorCode` when known; newer backend versions may add values. */
+  /** An `AppressErrorCode` when known; newer API versions may add values. */
   readonly code: AppressErrorCode | (string & {}) | undefined;
   readonly headers: Headers;
   /** Raw response body (text when it is not JSON). */

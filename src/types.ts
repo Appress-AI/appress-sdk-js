@@ -8,7 +8,9 @@ import type {
   GENERATION_STATUSES,
   INPUT_TYPES,
   LIVE_TRANSCRIPTION_PLATFORMS,
+  LIVE_TRANSCRIPTION_FAILURE_CODES,
   LIVE_TRANSCRIPTION_STATES,
+  GENERATION_PROGRESS_STEPS,
   NEWS_CATEGORIES,
   TONES,
 } from './constants.js';
@@ -19,6 +21,8 @@ export type FeatureType = (typeof FEATURE_TYPES)[number];
 export type GenerationFeatureType = Exclude<FeatureType, 'LIVE_TRANSCRIPTION'>;
 
 export type GenerationStatus = (typeof GENERATION_STATUSES)[number];
+
+export type GenerationProgressStep = (typeof GENERATION_PROGRESS_STEPS)[number];
 
 export type InputType = (typeof INPUT_TYPES)[number];
 
@@ -152,7 +156,8 @@ export interface GenerationListParams {
 // ---------------------------------------------------------------------------
 
 export interface GenerationProgress {
-  step: string | null;
+  /** Coarse step (`preparing`, `processing`, `finalizing`); new values may be added. */
+  step: GenerationProgressStep | (string & {}) | null;
   percent: number | null;
 }
 
@@ -247,6 +252,8 @@ export interface GenerationList {
 
 export type LiveTranscriptionState = (typeof LIVE_TRANSCRIPTION_STATES)[number];
 
+export type LiveTranscriptionFailureCode = (typeof LIVE_TRANSCRIPTION_FAILURE_CODES)[number];
+
 export interface LiveTranscriptionCreateParams {
   /** Live stream URL (YouTube, X, ...). */
   url: string;
@@ -295,7 +302,8 @@ export interface LiveTranscription {
   expiresAt: string | null;
   lastSequence: number;
   mediaTitle: string | null;
-  failureCode: string | null;
+  /** Set only when `FAILED`. New values may be added; show `failureMessage` for unknown ones. */
+  failureCode: LiveTranscriptionFailureCode | (string & {}) | null;
   failureMessage: string | null;
   turns: LiveTranscriptionTurn[];
   createdAt: string;

@@ -157,6 +157,9 @@ for await (const turn of appress.liveTranscriptions.streamTurns(session.id)) {
 Pass `{ includePartial: true }` for interim text. Breaking out of the loop does **not** stop the
 session — call `stop(id)`. Use `extendOptions(id)` / `extend(id, { totalDurationMinutes })` to extend.
 
+A `FAILED` session carries `failureCode` (one of `LIVE_TRANSCRIPTION_FAILURE_CODES`, e.g. `SOURCE_UNAVAILABLE`)
+and a human-readable `failureMessage`. New codes may be added; treat unknown ones as a generic failure.
+
 ## Idempotency
 
 `create()` and `extend()` send a fresh UUID `Idempotency-Key`, reused on automatic retries.

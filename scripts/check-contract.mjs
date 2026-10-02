@@ -32,6 +32,8 @@ const ENUMS = {
   ApiGenerationInputType: sdk.INPUT_TYPES,
   LiveTranscriptionState: sdk.LIVE_TRANSCRIPTION_STATES,
   LiveTranscriptionPlatform: sdk.LIVE_TRANSCRIPTION_PLATFORMS,
+  LiveTranscriptionFailureCode: sdk.LIVE_TRANSCRIPTION_FAILURE_CODES,
+  GenerationProgressStep: sdk.GENERATION_PROGRESS_STEPS,
 };
 
 /** OpenAPI object schema → fields of the matching `src/types.ts` interface. */
@@ -105,6 +107,8 @@ const configUrl = /^https?:/.test(source) ? new URL('/api-reference/config', sou
 if (configUrl) {
   const config = (await (await fetch(configUrl)).json()).data;
   diff('News categories', [...sdk.NEWS_CATEGORIES], config?.generations?.newsCategories ?? []);
+  diff('Live failure codes', [...sdk.LIVE_TRANSCRIPTION_FAILURE_CODES], config?.liveTranscription?.failureCodes ?? []);
+  diff('Error codes', [...sdk.ERROR_CODES], (config?.errors?.codes ?? []).map((c) => c.code));
 }
 
 if (problems.length) {
