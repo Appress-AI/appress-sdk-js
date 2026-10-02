@@ -80,7 +80,7 @@ export class Generations {
     });
   }
 
-  /** Lists the tenant's API generations, paginated (`{ items, total }`). */
+  /** Lists your account's API generations, paginated (`{ items, total }`). */
   list(params: GenerationListParams = {}, options: RequestOptions = {}): Promise<GenerationList> {
     return this.http.request<GenerationList>({
       ...options,

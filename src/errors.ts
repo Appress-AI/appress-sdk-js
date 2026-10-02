@@ -52,7 +52,7 @@ export class AuthenticationError extends APIError {}
 export class PermissionDeniedError extends APIError {}
 /** 403 `INSUFFICIENT_API_CREDIT` — not enough API credit. Nothing was charged; top up the wallet. */
 export class InsufficientCreditError extends PermissionDeniedError {}
-/** 404 — generation or session not found (or it belongs to another key/tenant). */
+/** 404 — generation or session not found (or it belongs to another account). */
 export class NotFoundError extends APIError {}
 /** 409 — conflict. See `code` for details. */
 export class ConflictError extends APIError {}
@@ -69,7 +69,7 @@ export class RateLimitError extends APIError {
     return parseRetryAfterSeconds(this.headers.get('retry-after'));
   }
 }
-/** 5xx — server or upstream service error. */
+/** 5xx — server error. */
 export class InternalServerError extends APIError {}
 
 /** Network error: the request did not reach the server or no response arrived. */

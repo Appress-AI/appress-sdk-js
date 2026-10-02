@@ -2,7 +2,7 @@
 
 ## 0.3.0 — 2026-10-01
 
-- `news_category` uses English values (`technology`, `sports`, …). `NewsCategory` and `NEWS_CATEGORIES` now list the English values; the API still accepts the older Turkish slugs at runtime, but they are no longer part of the type.
+- `news_category` uses English values (`technology`, `sports`, …). `NewsCategory` and `NEWS_CATEGORIES` now list the English values.
 - `check:contract` also compares the category list with `GET /api-reference/config`.
 
 ## 0.2.0 — 2026-10-01

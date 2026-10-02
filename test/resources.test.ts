@@ -75,7 +75,7 @@ describe('generations.waitForCompletion', () => {
   it('polls until a final status and reports progress', async () => {
     const { fetch, requests } = mockFetch(
       ok(generation({ status: 'PENDING' })),
-      ok(generation({ status: 'PROCESSING', progress: { step: 'stt', percent: 40 } })),
+      ok(generation({ status: 'PROCESSING', progress: { step: 'processing', percent: 40 } })),
       ok(generation({ status: 'COMPLETED', result: { text: 'article' }, actualCostUsd: '0.180000' })),
     );
     const seen: string[] = [];

@@ -130,7 +130,7 @@ const words = getTimedWords(transcript.result);     // TRANSCRIPTION / DIARIZATI
 
 | Feature | Line attributes |
 | --- | --- |
-| `TRANSCRIPTION` | `start`, `end` (`MM:SS`) and `words: [{ t, s, e }]` on lines aligned to the audio. Not present when the transcript was translated (`translate_lang`) or the provider returned no timings. |
+| `TRANSCRIPTION` | `start`, `end` (`MM:SS`) and `words: [{ t, s, e }]` on lines aligned to the audio. Not present when the transcript was translated (`translate_lang`) or no word timings are available. |
 | `DIARIZATION` | One op per speaker turn: `speaker`, `start`, `end`, `color`, optional `words`. |
 | `PROOFREADING` | Corrected text, plus `result.diff` (delta ops from input to output). |
 | `NEWS` / `PRESS_RELEASE` | Formatting attributes (bold, italic, …); quote anchors are in `generation.quoteAnchors`. |

@@ -143,7 +143,7 @@ export interface GenerationListParams {
   take?: number;
   featureType?: FeatureType;
   status?: GenerationStatus;
-  /** Only generations created by this API key; without it, every API generation of the tenant is returned. */
+  /** Only generations created by this API key; without it, every API generation of your account is returned. */
   apiKeyId?: string;
 }
 
@@ -218,7 +218,7 @@ export interface SpeakerTurnAttributes {
   end: string;
   /** Display colour suggested for the speaker label. */
   color: string;
-  /** Present when the speech-to-text provider returned word timings. */
+  /** Present when word timings are available. */
   words?: TimedWord[];
 }
 

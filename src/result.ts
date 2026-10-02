@@ -31,7 +31,7 @@ export function getSpeakerTurns(result: GenerationResult | undefined | null): Sp
 
 /**
  * Every word timing in a TRANSCRIPTION or DIARIZATION result, in order.
- * Empty when the provider returned no timings or the transcript was translated.
+ * Empty when no word timings are available or the transcript was translated.
  */
 export function getTimedWords(result: GenerationResult | undefined | null): TimedWord[] {
   if (!result || !Array.isArray(result.ops)) return [];
