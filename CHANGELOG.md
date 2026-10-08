@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `expectedLanguage` accepts `"auto"` (detects the spoken language, which may change during the session) or one of the supported language codes listed in the API reference; other values are rejected with a 400 error.
+
 ## 0.4.0 — 2026-10-02
 
 - Breaking: live session `state` values are `CREATED`, `STARTING`, `STREAMING`, `STOPPING`, `COMPLETED`, `FAILED`; the intermediate start-up states are reported as `STARTING`.
