@@ -48,7 +48,7 @@ export class NotFoundError extends APIError {}
 export class ConflictError extends APIError {}
 /** 409 `IDEMPOTENCY_KEY_CONFLICT` — the same key was used with a different body. */
 export class IdempotencyConflictError extends ConflictError {}
-/** 409 `CONCURRENT_GENERATION_LIMIT` — your plan's concurrent generation limit is reached. */
+/** 409 `CONCURRENT_GENERATION_LIMIT` — your account's concurrent API generation limit is reached. */
 export class ConcurrencyLimitError extends ConflictError {}
 /** 413 — file or request body limit exceeded. */
 export class PayloadTooLargeError extends APIError {}
