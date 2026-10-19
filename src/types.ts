@@ -43,6 +43,10 @@ export interface TranscriptionParams {
 }
 
 export interface DiarizationParams {
+  /** Source audio language. Defaults to `tr`. */
+  stt_lang?: string;
+  /** Language code (e.g. `en`, `pt-BR`); when set, the interview is translated into this language. */
+  translate_lang?: string;
   /** Expected number of speakers (at least 1). */
   speakers_expected?: number;
   title?: string;
@@ -223,7 +227,7 @@ export interface SpeakerTurnAttributes {
   end: string;
   /** Display colour suggested for the speaker label. */
   color: string;
-  /** Present when word timings are available. */
+  /** Present when word timings are available; never present when the interview was translated (`translate_lang`). */
   words?: TimedWord[];
 }
 
