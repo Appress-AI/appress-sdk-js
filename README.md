@@ -153,12 +153,65 @@ for await (const turn of appress.liveTranscriptions.streamTurns(session.id)) {
 }
 ```
 
+To translate each turn while the session runs, pass `translationLanguages` when you create it
+(codes and the limit come from `options().translation`; each language adds
+`translationReservedCostUsdPerLanguage` to the reservation). Languages cannot be changed after the
+session starts. A language that cannot be opened is skipped and the session continues;
+`session.translationLanguages` lists the active ones.
+
+```ts
+const session = await appress.liveTranscriptions.create({
+  url: 'https://www.youtube.com/watch?v=…',
+  expectedLanguage: 'tr',
+  translationLanguages: ['en', 'de'],
+});
+
+for await (const turn of appress.liveTranscriptions.streamTurns(session.id)) {
+  const en = turn.translations.en;
+  console.log(turn.text, en?.status === 'completed' ? `→ ${en.text}` : '');
+}
+```
+
+The saved result of the session stays in the spoken language; translations are only on the turns.
+
 `streamTurns` yields each finalised turn once and ends when the session is `COMPLETED` or `FAILED`.
 Pass `{ includePartial: true }` for interim text. Breaking out of the loop does **not** stop the
 session — call `stop(id)`. Use `extendOptions(id)` / `extend(id, { totalDurationMinutes })` to extend.
 
 A `FAILED` session carries `failureCode` (one of `LIVE_TRANSCRIPTION_FAILURE_CODES`, e.g. `SOURCE_UNAVAILABLE`)
 and a human-readable `failureMessage`. New codes may be added; treat unknown ones as a generic failure.
+
+## Webhooks
+
+Register an HTTPS endpoint in the developer portal to receive events instead of polling:
+`generation.completed`, `generation.failed`, `generation.cancelled`, `live_transcription.started`,
+`live_transcription.completed`, `live_transcription.failed` (and `webhook.test` from the portal's test button).
+Events carry ids and status, not results: fetch the resource with `generations.retrieve(id)` or
+`liveTranscriptions.retrieve(id)`.
+
+Verify every delivery with the endpoint secret, using the raw request body:
+
+```ts
+import { verifyWebhook, WebhookVerificationError } from '@appress/sdk';
+
+app.post('/appress/webhooks', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const event = await verifyWebhook(req.body, req.headers, process.env.APPRESS_WEBHOOK_SECRET!);
+    if (event.type === 'generation.completed') {
+      const generation = await appress.generations.retrieve(event.data.id);
+      // ...
+    }
+    res.sendStatus(200);
+  } catch (error) {
+    if (error instanceof WebhookVerificationError) return res.sendStatus(400);
+    throw error;
+  }
+});
+```
+
+Deliveries are at least once and unordered; deduplicate on `event.id`. Any non-2xx response is retried
+on a schedule published in `GET /api-reference/config`; `410 Gone` disables the endpoint. During a secret
+rotation both the new and the previous secret sign each delivery, so either one verifies.
 
 ## Idempotency
 

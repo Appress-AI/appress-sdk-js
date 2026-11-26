@@ -82,6 +82,7 @@ export function liveSession(overrides: Record<string, unknown> = {}) {
     startedAt: null,
     completedAt: null,
     reservedCostUsd: '1.000000',
+    translationLanguages: [],
     ...overrides,
   };
 }

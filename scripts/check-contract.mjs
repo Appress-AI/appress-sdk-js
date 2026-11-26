@@ -47,22 +47,26 @@ const OBJECTS = {
   ApiLiveSessionDto: [
     'id', 'url', 'generationId', 'state', 'platform', 'expectedLanguage', 'maxDurationMinutes', 'expiresAt',
     'lastSequence', 'mediaTitle', 'failureCode', 'failureMessage', 'turns', 'createdAt', 'startedAt',
-    'completedAt', 'reservedCostUsd',
+    'completedAt', 'reservedCostUsd', 'translationLanguages',
   ],
-  ApiLiveTurnDto: ['turnId', 'sequence', 'text', 'isFinal', 'startMs', 'endMs', 'speaker', 'language', 'words'],
+  ApiLiveTurnDto: [
+    'turnId', 'sequence', 'text', 'isFinal', 'startMs', 'endMs', 'speaker', 'language', 'words', 'translations',
+  ],
   ApiLiveWordDto: ['text', 'startMs', 'endMs', 'confidence', 'speaker'],
   ApiActiveLiveSessionDto: [
     'id', 'url', 'generationId', 'title', 'state', 'platform', 'maxDurationMinutes', 'expiresAt', 'startedAt',
-    'createdAt', 'reservedCostUsd',
+    'createdAt', 'reservedCostUsd', 'translationLanguages',
   ],
-  ApiLiveOptionsDto: ['durationOptions'],
-  ApiLiveDurationOptionDto: ['minutes', 'reservedCostUsd'],
+  ApiLiveOptionsDto: ['durationOptions', 'translation'],
+  ApiLiveDurationOptionDto: ['minutes', 'reservedCostUsd', 'translationReservedCostUsdPerLanguage'],
+  ApiLiveTranslationOptionsDto: ['languages', 'maxLanguages'],
   ApiLiveExtendOptionsDto: ['currentDurationMinutes', 'currentReservedCostUsd', 'options'],
   ApiLiveExtendOptionDto: ['totalDurationMinutes', 'additionalReservedCostUsd', 'totalReservedCostUsd'],
   CreateApiGenerationDto: ['featureType', 'inputText', 'inputUrl', 'featureParams'],
-  CreateLiveTranscriptionDto: [
-    // `source` is intentionally absent from the SDK: the API only accepts "url", the default.
+  CreateApiLiveTranscriptionDto: [
+    // `source` is intentionally absent from the SDK params: the API only accepts "url", the default.
     'source', 'url', 'title', 'expectedLanguage', 'speakerLabels', 'maxSpeakers', 'includeWords', 'maxDurationMinutes',
+    'translationLanguages',
   ],
   ExtendApiLiveTranscriptionDto: ['totalDurationMinutes'],
 };
@@ -109,6 +113,11 @@ if (configUrl) {
   diff('News categories', [...sdk.NEWS_CATEGORIES], config?.generations?.newsCategories ?? []);
   diff('Live failure codes', [...sdk.LIVE_TRANSCRIPTION_FAILURE_CODES], config?.liveTranscription?.failureCodes ?? []);
   diff('Error codes', [...sdk.ERROR_CODES], (config?.errors?.codes ?? []).map((c) => c.code));
+  diff('Webhook event types', [...sdk.WEBHOOK_EVENT_TYPES], config?.webhooks?.eventTypes ?? []);
+  if ((config?.webhooks?.testEventType ?? sdk.WEBHOOK_TEST_EVENT_TYPE) !== sdk.WEBHOOK_TEST_EVENT_TYPE) problems.push('Webhook test event type differs');
+  const headerNames = [config?.webhooks?.idHeader, config?.webhooks?.timestampHeader, config?.webhooks?.signatureHeader];
+  const sdkHeaders = [sdk.WEBHOOK_ID_HEADER, sdk.WEBHOOK_TIMESTAMP_HEADER, sdk.WEBHOOK_SIGNATURE_HEADER];
+  if (config?.webhooks && headerNames.some((h, i) => h?.toLowerCase() !== sdkHeaders[i])) problems.push('Webhook header names differ');
 }
 
 if (problems.length) {

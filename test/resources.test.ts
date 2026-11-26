@@ -135,6 +135,29 @@ describe('liveTranscriptions', () => {
     for (const req of requests) expect(req.headers.get('idempotency-key')).toBeTruthy();
   });
 
+  it('create sends translationLanguages and returns turn translations', async () => {
+    const turn = {
+      turnId: 't1',
+      sequence: 1,
+      text: 'Merhaba',
+      isFinal: true,
+      startMs: 0,
+      endMs: 900,
+      speaker: null,
+      language: 'tr',
+      words: null,
+      translations: { en: { status: 'completed', text: 'Hello' } },
+    };
+    const { fetch, requests } = mockFetch(ok(liveSession({ translationLanguages: ['en'], turns: [turn] }), 202));
+    const session = await client(fetch).liveTranscriptions.create({
+      url: 'https://www.youtube.com/watch?v=x',
+      translationLanguages: ['en'],
+    });
+    expect(JSON.parse(requests[0]!.body as string)).toMatchObject({ translationLanguages: ['en'] });
+    expect(session.translationLanguages).toEqual(['en']);
+    expect(session.turns[0]!.translations.en).toEqual({ status: 'completed', text: 'Hello' });
+  });
+
   it('stop sends no Idempotency-Key', async () => {
     const { fetch, requests } = mockFetch(ok(liveSession({ state: 'STOPPING' }), 202));
     await client(fetch).liveTranscriptions.stop('id');

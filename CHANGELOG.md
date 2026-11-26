@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Live transcriptions accept `translationLanguages` (set at creation, up to `options().translation.maxLanguages`). Each turn has `translations` keyed by language (`status`: `pending` | `completed` | `failed`, `text` when completed); sessions and active sessions list `translationLanguages`. `options()` returns `translation.languages`, `translation.maxLanguages` and `translationReservedCostUsdPerLanguage` per duration.
+- Webhooks: `verifyWebhook(rawBody, headers, secret)` verifies a delivery (`Appress-Webhook-Signature`, timestamp tolerance 300 s by default) and returns the typed `WebhookEvent`; throws `WebhookVerificationError`. New `WEBHOOK_EVENT_TYPES` and `WEBHOOK_TEST_EVENT_TYPE`. Works in Node.js 20+, Deno, Bun and edge runtimes (Web Crypto).
+- New error codes: `LIVE_TRANSLATION_INVALID_LANGUAGE`, `LIVE_TRANSLATION_SAME_LANGUAGE`, `LIVE_TRANSLATION_LIMIT_REACHED`.
+- Breaking (types only): `LiveTranscriptionPlatform` is `youtube` | `x`; the API never returned `microphone` for API sessions.
+
 - `DiarizationParams` accepts `stt_lang` (source audio language) and `translate_lang` (the interview is translated into this language). Translated interviews keep one op per speaker turn with `speaker`, `start`, `end`, `color`, without `words`; turns with no translatable content are omitted. `translate_lang` takes a language code such as `en`, `ar` or `pt-BR`.
 - `expectedLanguage` accepts `"auto"` (detects the spoken language, which may change during the session) or one of the supported language codes listed in the API reference; other values are rejected with a 400 error.
 

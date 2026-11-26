@@ -270,6 +270,19 @@ export interface LiveTranscriptionCreateParams {
   includeWords?: boolean;
   /** One of the durations from `liveTranscriptions.options()`; defaults to 120. */
   maxDurationMinutes?: number;
+  /**
+   * Languages to translate each turn into, set when the session starts (unique, up to
+   * `options().translation.maxLanguages`, codes from `options().translation.languages`). Each language
+   * adds `translationReservedCostUsdPerLanguage` to the reservation. A language that cannot be opened is
+   * skipped and the session continues; `translationLanguages` on the session lists the active ones.
+   */
+  translationLanguages?: string[];
+}
+
+export interface LiveTranscriptionTurnTranslation {
+  status: 'pending' | 'completed' | 'failed';
+  /** Translated text; set only when `status` is `completed`. */
+  text?: string;
 }
 
 export interface LiveTranscriptionTurn {
@@ -283,6 +296,8 @@ export interface LiveTranscriptionTurn {
   language: string | null;
   /** Set only when the session was started with `includeWords: true`. */
   words: LiveTranscriptionWord[] | null;
+  /** Translations of this turn keyed by language code; `{}` when the session has no translation languages. */
+  translations: Record<string, LiveTranscriptionTurnTranslation>;
 }
 
 export interface LiveTranscriptionWord {
@@ -314,6 +329,8 @@ export interface LiveTranscription {
   startedAt: string | null;
   completedAt: string | null;
   reservedCostUsd: string;
+  /** Active translation languages, sorted. */
+  translationLanguages: string[];
 }
 
 export interface ActiveLiveTranscription {
@@ -328,10 +345,22 @@ export interface ActiveLiveTranscription {
   startedAt: string | null;
   createdAt: string;
   reservedCostUsd: string;
+  /** Active translation languages, sorted. */
+  translationLanguages: string[];
 }
 
 export interface LiveTranscriptionOptions {
-  durationOptions: { minutes: number; reservedCostUsd: string }[];
+  durationOptions: {
+    minutes: number;
+    reservedCostUsd: string;
+    /** Added to `reservedCostUsd` for each translation language. */
+    translationReservedCostUsdPerLanguage: string;
+  }[];
+  translation: {
+    /** Accepted `translationLanguages` codes. */
+    languages: string[];
+    maxLanguages: number;
+  };
 }
 
 export interface LiveTranscriptionExtendOptions {
@@ -371,3 +400,46 @@ export interface IdempotentRequestOptions extends RequestOptions {
    */
   idempotencyKey?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Webhooks
+// ---------------------------------------------------------------------------
+
+interface WebhookEventBase<TType extends string, TData> {
+  /** Unique event id; also sent as `Appress-Webhook-Id`. Deliveries are at least once: deduplicate on it. */
+  id: string;
+  type: TType;
+  createdAt: string;
+  data: TData;
+}
+
+export interface WebhookGenerationData {
+  object: 'generation';
+  id: string;
+  featureType: FeatureType;
+  status: GenerationStatus;
+  apiKeyId: string | null;
+  completedAt: string | null;
+  /** Set for `generation.failed` and `generation.cancelled`. */
+  error?: string | null;
+}
+
+export interface WebhookLiveTranscriptionData {
+  object: 'live_transcription';
+  id: string;
+  generationId: string;
+  state: LiveTranscriptionState;
+  apiKeyId: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  failureCode?: LiveTranscriptionFailureCode | (string & {}) | null;
+  failureMessage?: string | null;
+}
+
+export type WebhookEvent =
+  | WebhookEventBase<'generation.completed' | 'generation.failed' | 'generation.cancelled', WebhookGenerationData>
+  | WebhookEventBase<
+      'live_transcription.started' | 'live_transcription.completed' | 'live_transcription.failed',
+      WebhookLiveTranscriptionData
+    >
+  | WebhookEventBase<'webhook.test', { object: 'webhook_test'; endpointId: string }>;

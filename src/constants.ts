@@ -34,7 +34,7 @@ export const LIVE_TRANSCRIPTION_FAILURE_CODES = [
 /** `progress.step` values of a generation. New values may be added. */
 export const GENERATION_PROGRESS_STEPS = ['preparing', 'processing', 'finalizing'] as const;
 
-export const LIVE_TRANSCRIPTION_PLATFORMS = ['youtube', 'x', 'microphone'] as const;
+export const LIVE_TRANSCRIPTION_PLATFORMS = ['youtube', 'x'] as const;
 
 /** `news_category` values for NEWS and PRESS_RELEASE. */
 export const NEWS_CATEGORIES = [
@@ -66,9 +66,25 @@ export const ERROR_CODES = [
   'LIVE_SESSION_NOT_EXTENDABLE',
   'LIVE_EXTENSION_IN_PROGRESS',
   'LIVE_EXTENSION_INVALID',
+  'LIVE_TRANSLATION_INVALID_LANGUAGE',
+  'LIVE_TRANSLATION_SAME_LANGUAGE',
+  'LIVE_TRANSLATION_LIMIT_REACHED',
   'INSUFFICIENT_API_CREDIT',
   'INVALID_API_KEY',
   'RATE_LIMIT_EXCEEDED',
   'RATE_LIMIT_UNAVAILABLE',
   'SERVICE_BUSY',
 ] as const;
+
+/** Webhook event types an endpoint can subscribe to (published in `GET /api-reference/config`). */
+export const WEBHOOK_EVENT_TYPES = [
+  'generation.completed',
+  'generation.failed',
+  'generation.cancelled',
+  'live_transcription.started',
+  'live_transcription.completed',
+  'live_transcription.failed',
+] as const;
+
+/** Event type of the deliveries sent with "send test event". */
+export const WEBHOOK_TEST_EVENT_TYPE = 'webhook.test' as const;

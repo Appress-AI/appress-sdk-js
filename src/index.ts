@@ -6,4 +6,15 @@ export { TERMINAL_GENERATION_STATUSES, type WaitOptions } from './resources/gene
 export { TERMINAL_LIVE_STATES, type StreamTurnsOptions } from './resources/live-transcriptions.js';
 export type { HttpRequest } from './core/http.js';
 export { getResultText, getSpeakerTurns, getTimedWords, type SpeakerTurn } from './result.js';
+export {
+  verifyWebhook,
+  isKnownWebhookEventType,
+  WebhookVerificationError,
+  WEBHOOK_ID_HEADER,
+  WEBHOOK_TIMESTAMP_HEADER,
+  WEBHOOK_SIGNATURE_HEADER,
+  DEFAULT_WEBHOOK_TOLERANCE_SECONDS,
+  type VerifyWebhookOptions,
+  type WebhookHeaders,
+} from './webhooks.js';
 export { VERSION } from './version.js';
